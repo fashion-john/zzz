@@ -36,27 +36,26 @@ class ConvTransE(torch.nn.Module):
     def forward(self, embedding, emb_rel, triplets, his_emb, pre_weight, pre_type, partial_embeding=None):
         # print(f'pre_weight,{pre_weight}')
         '''
-        embedding是当前子图的所有嵌入表示
+        
         '''
         if args.relation_prediction:
             e1_embedded_all = emb_rel
         else:
-            e1_embedded_all = embedding # 当前时刻图嵌入
+            e1_embedded_all = embedding #
 
-        embedded_his = his_emb #全局图嵌入
+        embedded_his = his_emb #
         '''
-            从 e1_embedded_all 中获取与当前三元组 triplets 中的头实体（triplets[:, 0]）对应的嵌入，
-            并通过 unsqueeze(1) 对其进行维度扩展。
+           
         '''
         if args.add_his_graph:
-            e1 = pre_weight * e1_embedded_all + (1 - pre_weight) * embedded_his  # 匹配目标
+            e1 = pre_weight * e1_embedded_all + (1 - pre_weight) * embedded_his  # 
         else:
             # print('不使用历史子图')
             e1 = e1_embedded_all
 
         e1_embed = embedding[triplets[:, 0]]######
         if args.relation_prediction:
-            rel_embedded = embedding[triplets[:, 2]]#尾实体的嵌入
+            rel_embedded = embedding[triplets[:, 2]]#
         else:
             rel_embedded = emb_rel[triplets[:, 1]]
 
@@ -70,10 +69,9 @@ class ConvTransE(torch.nn.Module):
         cl_x = x
         if partial_embeding is None:
             '''
-            x,torch.Size([115, 200])，经过静态图谱增强后，整合关系信息的 query
-            e1_embedded_all:torch.Size([7128, 200])，当前子图嵌入表示
+            
             '''
-            # print(x.shape, e1.shape)#格式为torch.Size([174, 256]) torch.Size([460, 256])
+            # print(x.shape, e1.shape)#
             x = torch.mm(x, e1.transpose(1, 0))
             # print('x:',x.shape)##(115,7128)
         else:
