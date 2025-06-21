@@ -25,7 +25,7 @@ warnings.filterwarnings('ignore')
 
 
 def update_dict(subg_arr, s_to_sro, sr_to_sro,sro_to_fre, num_rels):
-    # 根据输入的每一个时间的图来更新查询查询
+    # 
     inverse_subg = subg_arr[:, [2, 1, 0]]
     inverse_subg[:, 1] = inverse_subg[:, 1] + num_rels
     subg_triples = np.concatenate([subg_arr, inverse_subg])
@@ -35,11 +35,11 @@ def update_dict(subg_arr, s_to_sro, sr_to_sro,sro_to_fre, num_rels):
         
 def e2r(triplets, num_rels):
     # print(f'e2r,{len(triplets)}')
-    # 统计同一个查询实体连接不同的关系
+    # 
     src, rel, dst = triplets.transpose()
-    uniq_e = np.unique(src)#np.unique(src) 会对 src 进行排序。它不仅返回唯一的元素，而且会按照升序对这些元素进行排序。
+    uniq_e = np.unique(src)#
 
-    e_to_r = defaultdict(list)#set##############并没有对关系去重，表示后续关系融合时关系多大的特征权重会大
+    e_to_r = defaultdict(list)#
     for j, (src, rel, dst) in enumerate(triplets):
         e_to_r[src].append(rel)#add
     # print(e_to_r)
@@ -64,24 +64,24 @@ def e2t(triplets, num_rels):
     # triplets: numpy array of shape (N, 3), each row is (head, rel, tail)
     src, rel, dst = triplets.transpose()
 
-    uniq_e = np.unique(src)  # 所有唯一的头实体 h
+    uniq_e = np.unique(src)  # 
     e_to_t = defaultdict(list)
 
     for j, (h, r, t) in enumerate(triplets):
-        e_to_t[h].append(t)  # 一个头实体可能对应多个尾实体
+        e_to_t[h].append(t)  #
 
     t_len = []
     t_idx = []
     idx = 0
     for e in uniq_e:
         ts = e_to_t[e]
-        t_len.append((idx, idx + len(ts)))  # 记录每个 h 对应的 t 的起止索引
+        t_len.append((idx, idx + len(ts)))  # 
         t_idx.extend(ts)
         idx += len(ts)
 
-    uniq_e = torch.from_numpy(np.array(uniq_e)).long().cuda()       # 所有唯一的头实体
-    t_len = torch.from_numpy(np.array(t_len)).long().cuda()         # 每个头实体对应尾实体范围
-    t_idx = torch.from_numpy(np.array(t_idx)).long().cuda()         # 所有尾实体展平列表
+    uniq_e = torch.from_numpy(np.array(uniq_e)).long().cuda()       # 
+    t_len = torch.from_numpy(np.array(t_len)).long().cuda()         # 
+    t_idx = torch.from_numpy(np.array(t_idx)).long().cuda()         # 
 
     return [uniq_e, t_len, t_idx]
 
@@ -122,7 +122,7 @@ def test(model, history_list, test_list, num_rels, num_nodes, use_cuda, all_ans_
             que_pair = e2r(test_snap, num_rels)
             que_pair_inv = e2r(inverse_triples, num_rels)
         '''
-        和train时一样，二阶子图
+    
         '''
         if args.add_his_graph:
             sub_snap, sub_snap_inv = get_sample_from_history_graph3(subg_arr, sr_to_sro, test_snap, num_nodes, num_rels,use_cuda, args.gpu)
@@ -158,7 +158,7 @@ def test(model, history_list, test_list, num_rels, num_nodes, use_cuda, all_ans_
     mrr_raw,hit_raw = utils.stat_ranks(ranks_raw, "raw")
     mrr_filter,hit_filter = utils.stat_ranks(ranks_filter, "filter")
     mrr_raw_inv,hit_raw_inv = utils.stat_ranks(ranks_raw_inv, "raw_inv")
-    mrr_filter_inv,hit_filter_inv = utils.stat_ranks(ranks_filter_inv, "filter_inv")###################经过过滤的排名指标,去除不可能是正确答案的实体
+    mrr_filter_inv,hit_filter_inv = utils.stat_ranks(ranks_filter_inv, "filter_inv")#############
     all_mrr_raw = (mrr_raw+mrr_raw_inv)/2
     all_mrr_filter = (mrr_filter+mrr_filter_inv)/2
     all_hit_raw, all_hit_filter,all_hit_raw_r, all_hit_filter_r = [],[],[],[]
@@ -169,10 +169,10 @@ def test(model, history_list, test_list, num_rels, num_nodes, use_cuda, all_ans_
     print("(all_raw) MRR, Hits@ (1,3,5):{:.6f}, {:.6f}, {:.6f}, {:.6f}".format( all_mrr_raw.item(), all_hit_raw[0],all_hit_raw[1],all_hit_raw[2]))
     print("(all_filter) MRR, Hits@ (1,3,5):{:.6f}, {:.6f}, {:.6f}, {:.6f}".format( all_mrr_filter.item(), all_hit_filter[0],all_hit_filter[1],all_hit_filter[2]))
     
-    # 文件转储
-    if mode == "test": # test模式写入，train模式忽略
+    # 
+    if mode == "test": 
         filename = './result/'+ args.dataset + ".csv"
-        if os.path.isfile(filename) == False:# 如果文件不存在，则创建
+        if os.path.isfile(filename) == False:# 
             with open (filename,'w', newline='') as f:
                 # 写入列名
                 fieldnames=['encoder','opn','pre_type','use_static','use_attr','gpu','datetime','pre_weight',
@@ -236,7 +236,7 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
     if args.add_static_graph:
         static_triples = np.array(_read_triplets_as_list("./data/" + args.dataset + "/e-w-graph-llm.txt", {}, {}, load_time=False))
         num_static_rels = len(np.unique(static_triples[:, 1]))
-        num_words = np.max(static_triples[:, 2])+1 - data.num_nodes######修改 maxc从最0开始的，所以要+1。原图谱7128个节点，序号到7127
+        num_words = np.max(static_triples[:, 2])+1 - data.num_nodes####
         print(np.max(static_triples[:, 2])+1)
         print(f'*************{num_static_rels},{num_words}')
         static_node_id = torch.from_numpy(np.arange(num_words + data.num_nodes)).view(-1, 1).long().cuda(args.gpu) \
@@ -254,7 +254,7 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
                           args.n_hidden,
                           args.opn,
                           # sequence_len=args.train_history_len,
-                          num_bases=args.n_bases,###################作用？
+                          num_bases=args.n_bases,#####
                           num_basis=args.n_basis,
                           num_hidden_layers=args.n_layers,
                           dropout=args.dropout,
@@ -271,12 +271,12 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
                           pre_weight = args.pre_weight,
                           # discount=args.discount,
                           # angle=args.angle,
-                          use_static=args.add_static_graph,###############使用静态图
+                          use_static=args.add_static_graph,###
                           pre_type = args.pre_type,
                           # use_cl = args.use_cl,
-                          # temperature = args.temperature, #######
+                          # temperature = args.temperature, ######
                           # entity_prediction=args.entity_prediction,
-                          # relation_prediction=args.relation_prediction,##不一定需要
+                          # relation_prediction=args.relation_prediction,#
                           use_cuda=use_cuda,
                           gpu=args.gpu,
                           analysis=args.run_analysis
@@ -288,7 +288,7 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
 
     if args.add_static_graph:
         '''
-        build_sub_graph图构建过程中就会增加关系，以及节点正、反表示
+
         '''
         static_graph = build_sub_graph(len(static_node_id), num_static_rels, static_triples, use_cuda, args.gpu)
 
@@ -302,9 +302,9 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
     # optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-5)
 
-    # # 动态调整学习率
+    # # 
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.9)
-    # # 设置学习率调度器
+    # #
 
     if args.test and os.path.exists(model_state_file):
         mrr_raw, mrr_filter= test(model,
@@ -344,9 +344,7 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
                 else:
                     input_list = train_list[train_sample_num - args.train_history_len: train_sample_num]
                 '''
-                train_s_r_{}.npy这是预处理的历史所有信息的汇总，[头、关系、尾、频率]
-                与test 一样，只选择了2阶信息
-                subg_snap为预处理的，整合了历史信息的（频率）的子图
+               
                 '''
                 if args.add_his_graph:
                     subgraph_arr = np.load('./data/{}/his_graph_for/train_s_r_{}.npy'.format(args.dataset, train_sample_num))
@@ -373,7 +371,7 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
                 # print(que_pair)
                 # generate history graph->input_list
                 ''' 
-                为什么 history_glist 要用 build_sub_graph(增加了双向边和更多图信息?
+                
                 '''
                 history_glist = [build_sub_graph(num_nodes, num_rels, snap, use_cuda, args.gpu) for snap in input_list]
                 triples = torch.from_numpy(output[0]).long().cuda()
@@ -381,12 +379,12 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
                 # 训练
                 for id in range(2): 
                     if id %2 ==0:
-                        # print("正正正正正正正正正正正")
+                        # 
                         loss_e, loss_static = model.get_loss(que_pair, subg_snap, train_sample_num,
                                                                               history_glist, triples,
                                                                               static_triples, static_graph, use_cuda)
                     else:
-                        # print("负负负负负负负负负负负")
+                        #
                         loss_e, loss_static = model.get_loss(que_pair_inv, subg_snap_inv, train_sample_num,
                                                                               history_glist, inverse_triples,
                                                                               inverse_static_triples, static_graph, use_cuda)
