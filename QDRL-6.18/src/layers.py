@@ -10,7 +10,7 @@ args = parse_opts()
 
 
 
-###################################RGCN部分
+###################################
 class UnionRGCNLayer(nn.Module):
     def __init__(self, in_feat, out_feat, num_rels, num_bases=-1,  bias=None,
                  activation=None, self_loop=False, dropout=0.0, skip_connect=False, rel_emb=None):
@@ -36,10 +36,10 @@ class UnionRGCNLayer(nn.Module):
             nn.init.xavier_uniform_(self.evolve_loop_weight, gain=nn.init.calculate_gain('relu'))
 
         if self.skip_connect:
-            self.skip_connect_weight = nn.Parameter(torch.Tensor(out_feat, out_feat))   # 和self-loop不一样，是跨层的计算
+            self.skip_connect_weight = nn.Parameter(torch.Tensor(out_feat, out_feat))   # 
             nn.init.xavier_uniform_(self.skip_connect_weight,gain=nn.init.calculate_gain('relu'))
             self.skip_connect_bias = nn.Parameter(torch.Tensor(out_feat))
-            nn.init.zeros_(self.skip_connect_bias)  # 初始化设置为0
+            nn.init.zeros_(self.skip_connect_bias)  # 
 
         if dropout:
             self.dropout = nn.Dropout(dropout)
@@ -50,31 +50,29 @@ class UnionRGCNLayer(nn.Module):
         g.update_all(lambda x: self.msg_func(x), fn.sum(msg='msg', out='h'), self.apply_func)
 
     def forward(self, g, prev_h, emb_rel):
-        # print(prev_h)# prev_h 输入为空，所以skip_connect没有意义
+        #
         self.rel_emb = emb_rel
         if self.self_loop:
             # loop_message = torch.mm(g.ndata['h'], self.loop_weight)
             # masked_index = torch.masked_select(torch.arange(0, g.number_of_nodes(), dtype=torch.long), (g.in_degrees(range(g.number_of_nodes())) > 0))
             '''
-            筛选出有入度的节点，并单独处理
+           
             '''
             masked_index = torch.masked_select(
                 torch.arange(0, g.number_of_nodes(), dtype=torch.long).cuda(),
                 (g.in_degrees(range(g.number_of_nodes())) > 0))
             '''
-            self.evolve_loop_weight：这个权重可能是随着时间或层次的变化而动态调整的权重。它用于在节点的自连接消息上进行某种“演化”，即模型在训练过程中可能需要调整自连接对节点表示的贡献。这个动态权重能够反映节点的表示随时间或层次的变化，而不是一成不变的。
-            self.loop_weight：这个权重可能是一个固定的权重，用于计算静态的自环消息。当节点的自连接关系不需要动态变化时，使用这个固定权重来计算自环消息。
+            
             '''
             loop_message = torch.mm(g.ndata['h'], self.evolve_loop_weight)
             loop_message[masked_index, :] = torch.mm(g.ndata['h'], self.loop_weight)[masked_index, :]
         if len(prev_h) != 0 and self.skip_connect:
-            skip_weight = F.sigmoid(torch.mm(prev_h, self.skip_connect_weight) + self.skip_connect_bias)     # 使用sigmoid，让值在0~1
-
+            skip_weight = F.sigmoid(torch.mm(prev_h, self.skip_connect_weight) + self.skip_connect_bias)   
         # calculate the neighbor message with weight_neighbor
         self.propagate(g)
         node_repr = g.ndata['h']
 
-        if len(prev_h) != 0 and self.skip_connect:  # 两次计算loop_message的方式不一样，前者激活后再加权
+        if len(prev_h) != 0 and self.skip_connect:  # 
             if self.self_loop:
                 node_repr = node_repr + loop_message
             node_repr = skip_weight * node_repr + (1 - skip_weight) * prev_h
@@ -94,7 +92,7 @@ class UnionRGCNLayer(nn.Module):
         node = edges.src['h'].view(-1, self.out_feat)
         msg = node + relation
         '''
-        不用加，用cat呢?
+       
         '''
         msg = self.neighbor_linear(msg)
         return {'msg': msg}
@@ -104,7 +102,7 @@ class UnionRGCNLayer(nn.Module):
 
 
 
-#########处理历史子图
+#########
 class UnionRGCNLayer2(nn.Module):
     def __init__(self, in_feat, out_feat, num_rels, num_bases=-1,  bias=None,
                  activation=None, self_loop=False, dropout=0.0, skip_connect=False, rel_emb=None):
@@ -136,10 +134,10 @@ class UnionRGCNLayer2(nn.Module):
             nn.init.xavier_uniform_(self.evolve_loop_weight, gain=nn.init.calculate_gain('relu'))
 
         if self.skip_connect:
-            self.skip_connect_weight = nn.Parameter(torch.Tensor(out_feat, out_feat))   # 和self-loop不一样，是跨层的计算
+            self.skip_connect_weight = nn.Parameter(torch.Tensor(out_feat, out_feat))   # 
             nn.init.xavier_uniform_(self.skip_connect_weight,gain=nn.init.calculate_gain('relu'))
             self.skip_connect_bias = nn.Parameter(torch.Tensor(out_feat))
-            nn.init.zeros_(self.skip_connect_bias)  # 初始化设置为0
+            nn.init.zeros_(self.skip_connect_bias)  #
 
         if dropout:
             self.dropout = nn.Dropout(dropout)
@@ -158,13 +156,13 @@ class UnionRGCNLayer2(nn.Module):
             loop_message = torch.mm(g.ndata['h'], self.evolve_loop_weight)
             loop_message[masked_index, :] = torch.mm(g.ndata['h'], self.loop_weight)[masked_index, :]
         if len(prev_h) != 0 and self.skip_connect:
-            skip_weight = F.sigmoid(torch.mm(prev_h, self.skip_connect_weight) + self.skip_connect_bias)     # 使用sigmoid，让值在0~1
+            skip_weight = F.sigmoid(torch.mm(prev_h, self.skip_connect_weight) + self.skip_connect_bias)     # 
 
         # calculate the neighbor message with weight_neighbor
         self.propagate(g)
         node_repr = g.ndata['h']
 
-        if len(prev_h) != 0 and self.skip_connect:  # 两次计算loop_message的方式不一样，前者激活后再加权
+        if len(prev_h) != 0 and self.skip_connect:  #
             if self.self_loop:
                 node_repr = node_repr + loop_message
             node_repr = skip_weight * node_repr + (1 - skip_weight) * prev_h
@@ -177,11 +175,11 @@ class UnionRGCNLayer2(nn.Module):
         if self.dropout is not None:
             node_repr = self.dropout(node_repr)
         g.ndata['h'] = node_repr
-        return node_repr#######最终更新的是g.ndata['h']
+        return node_repr######
 
     def msg_func(self, edges):
 
-        # print("rel_emb.shape:", self.rel_emb.shape)  # 检查关系嵌入的形状
+        # print("rel_emb.shape:", self.rel_emb.shape)  # 
         # print("Max edge type:", edges.data['type'].max().item())
         # print("Max edge fre:", edges.data['fre'].max().item())
         # print("Num relations:", self.rel_emb.shape[0])
@@ -189,18 +187,18 @@ class UnionRGCNLayer2(nn.Module):
         # assert edges.data['type'].max().item() < self.rel_emb.shape[0], "Error: Edge type index out of range!"
         # assert edges.data['fre'].max().item() < self.rel_emb.shape[0], "Error: Edge frequency index out of range!"
 
-        relation = self.rel_emb.index_select(0, edges.data['type']).view(-1, self.out_feat)##############关系
+        relation = self.rel_emb.index_select(0, edges.data['type']).view(-1, self.out_feat)#########
         # edge_type = edges.data['type']
         # edge_num = edge_type.shape[0]
-        # fre = self.rel_emb.index_select(0, edges.data['fre'])##频率当做边权重
-        # fre = edges.data['fre'].unsqueeze(1)  # 直接使用权重
-        fre = torch.softmax(edges.data['fre'].float().unsqueeze(1), dim=0)  # 归一化为概率分布
+        # fre = self.rel_emb.index_select(0, edges.data['fre'])##
+        # fre = edges.data['fre'].unsqueeze(1)  #
+        fre = torch.softmax(edges.data['fre'].float().unsqueeze(1), dim=0)  #
         # h_fre = torch.cos(self.weight_t * fre + self.bias_t)#.repeat(self.num_ents, 1)
         # print(f'edges.data:',h_fre.shape)
         # print(f'relation,{relation.shape}')
-        node = edges.src['h'].view(-1, self.out_feat)#########################节点
+        node = edges.src['h'].view(-1, self.out_feat)#######################
         msg = node + (relation * fre)
-        msg = torch.mm(msg, self.weight_neighbor)#####################特征映射到self.out_feat维度
+        msg = torch.mm(msg, self.weight_neighbor)####################
         return {'msg': msg}
 
     def apply_func(self, nodes):
