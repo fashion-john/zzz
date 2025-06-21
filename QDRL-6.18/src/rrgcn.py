@@ -293,7 +293,7 @@ class RecurrentRGCN(nn.Module):
         # print(r_len, r_idx)
 
         '''
-        新思路构建查询表示，用one-hot
+       
 
         '''
         if args.use_onehot or not args.add_query:
