@@ -34,7 +34,6 @@ def update_dict(subg_arr, s_to_sro, sr_to_sro,sro_to_fre, num_rels):
         sr_to_sro[(src, rel)].add(dst)
         
 def e2r(triplets, num_rels):
-    # print(f'e2r,{len(triplets)}')
     # 
     src, rel, dst = triplets.transpose()
     uniq_e = np.unique(src)#
@@ -103,7 +102,6 @@ def test(model, history_list, test_list, num_rels, num_nodes, use_cuda, all_ans_
         model.load_state_dict(checkpoint['state_dict'])
 
     model.eval()
-    # do not have inverse relation in test input
     input_list = [snap for snap in history_list[-args.train_history_len:]]
 
     if args.add_his_graph:
@@ -174,7 +172,6 @@ def test(model, history_list, test_list, num_rels, num_nodes, use_cuda, all_ans_
         filename = './result/'+ args.dataset + ".csv"
         if os.path.isfile(filename) == False:# 
             with open (filename,'w', newline='') as f:
-                # 写入列名
                 fieldnames=['encoder','opn','pre_type','use_static','use_attr','gpu','datetime','pre_weight',
                             'train_len','lr','n_hidden',
                             'filter_MRR','filter_H@1','filter_H@3','filter_H@10',
@@ -183,7 +180,6 @@ def test(model, history_list, test_list, num_rels, num_nodes, use_cuda, all_ans_
                             'filter_all_MRR','filter_all_H@1','filter_all_H@3','filter_all_H@10']
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
-        # 写入数据
         with open (filename,'a', newline='') as f:
             writer = csv.writer(f)
             row={'encoder':args.encoder,'opn':args.opn,'pre_type':args.pre_type,'use_static':args.add_static_graph,'gpu':args.gpu,'datetime':datetime.now(),'pre_weight':args.pre_weight,
@@ -333,7 +329,6 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
 
             idx = [_ for _ in range(len(train_list))]
 
-            # 只选取前train_history_len历史子图作为参考
             for train_sample_num in tqdm(idx):
             # for train_sample_num in idx:
                 if train_sample_num == 0:
@@ -358,7 +353,6 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
                 inverse_triples = output[0][:, [2, 1, 0]]
                 inverse_triples[:, 1] = inverse_triples[:, 1] + num_rels
                 '''
-                que_pair用于生成当前图的quer_mask
                 '''
 
                 if args.relation_prediction:
@@ -376,7 +370,7 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
                 history_glist = [build_sub_graph(num_nodes, num_rels, snap, use_cuda, args.gpu) for snap in input_list]
                 triples = torch.from_numpy(output[0]).long().cuda()
                 inverse_triples = torch.from_numpy(inverse_triples).long().cuda()
-                # 训练
+                # 
                 for id in range(2): 
                     if id %2 ==0:
                         # 
@@ -396,7 +390,7 @@ def run_experiment(args, n_hidden=None, n_layers=None, dropout=None, n_bases=Non
                     losses_e.append(loss_e.item())
                     losses_static.append(loss_static.item())
                     loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_norm)  # 用于RNN模型中梯度剪裁
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_norm)  # 
                     optimizer.step()
                     # scheduler.step()  ##
                     optimizer.zero_grad()
