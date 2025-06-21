@@ -8,7 +8,6 @@ from collections import defaultdict
 
 #######################################################################
 #
-# Utility function for building training and testing graphs
 #
 #######################################################################
 from opt import parse_opts
@@ -39,7 +38,7 @@ def sort_and_rank_filter(batch_a, batch_r, score, target, all_ans):
         score[i][b_multi] = 0
         score[i][ans] = ground
     _, indices = torch.sort(score, dim=1, descending=True)  # indices : [B, number entity]
-    indices = torch.nonzero(indices == target.view(-1, 1))  # indices : [B, 2] 第一列递增， 第二列表示对应的答案实体id在每一行的位置
+    indices = torch.nonzero(indices == target.view(-1, 1))  # indices : [B, 2] 
     indices = indices[:, 1].view(-1)
     return indices
 
@@ -243,22 +242,19 @@ def get_total_rank(test_triples, score, all_ans, eval_bz, rel_predict=0):
 
 def calculate_tail_accuracy(predicted_tails, all_ans):
     """
-    :param predicted_tails: 模型预测的尾实体列表，形状为 (num_triples,)
-    :param all_ans: 答案集合，包含每个 (head, relation) 对应的正确尾实体列表
-    :return: 匹配率 (Accuracy)
     """
     correct_count = 0
     num_triples = len(predicted_tails)
 
     for idx, predicted_tail in enumerate(predicted_tails):
         # 获取对应的真实答案
-        true_answers = all_ans[idx]  # 真实答案为一个列表
+        true_answers = all_ans[idx]  # 
 
-        # 判断预测是否在真实答案集合中
+        # 
         if predicted_tail in true_answers:
             correct_count += 1
 
-    # 计算匹配率
+    # 
     accuracy = correct_count / num_triples
     return accuracy
 
