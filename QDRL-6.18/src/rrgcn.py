@@ -120,7 +120,7 @@ class RecurrentRGCN(nn.Module):
         self.opn = opn
         self.num_words = num_words
         self.num_static_rels = num_static_rels
-        # self.sequence_len = sequence_len#########################没有用
+        # self.sequence_len = sequence_len########################
         self.h_dim = h_dim
         self.layer_norm = layer_norm
         self.h = None
@@ -160,7 +160,7 @@ class RecurrentRGCN(nn.Module):
             self.static_rgcn_layer = RGCNCell(num_ents,
                                              h_dim,
                                              h_dim,
-                                             num_rels * 2,  # 双向图
+                                             num_rels * 2,  # 
                                              num_bases,
                                              num_basis,
                                              num_hidden_layers,
@@ -178,7 +178,7 @@ class RecurrentRGCN(nn.Module):
         self.rgcn = RGCNCell(num_ents,
                              h_dim,
                              h_dim,
-                             num_rels * 2,#双向图
+                             num_rels * 2,#
                              num_bases,
                              num_basis,
                              num_hidden_layers,
@@ -242,16 +242,14 @@ class RecurrentRGCN(nn.Module):
 
     def forward(self, que_pair, sub_graph, T_idx, g_list, static_graph, use_cuda): #e_idx):
         '''
-        静态图旨在构建实体间3种关系的静态关系图：对于每个实体，如果实体名包含括号，则提取两个词语并分别记录两种关系：isA（关系类型 "0"）和 隶属（关系类型 "1"）。
-        如果没有括号，则建立一个直接的关系（关系类型 "2"）。
+      
         '''
         # his = self.his+self.dynamic_emb
         if self.use_static:
-            # his = self.dynamic_emb + self.his#整合历史信息
+            # his = self.dynamic_emb + self.his#
             # print(his,his.shape)
             static_graph = static_graph.to(self.gpu)
-            #拼接原节点和新增节点
-            static_graph.ndata['h'] = torch.cat((self.dynamic_emb, self.words_emb), dim=0)  # 演化得到的表示，和wordemb满足静态图约束
+            static_graph.ndata['h'] = torch.cat((self.dynamic_emb, self.words_emb), dim=0)  # 
 
             # self.statci_rgcn_layer(static_graph, [], self.static_remb)#, self.static_remb
             # static_emb = static_graph.ndata.pop('h')
@@ -267,9 +265,9 @@ class RecurrentRGCN(nn.Module):
             static_emb = None
             static_remb = None
         '''
-        static_graph 和 全局历史 有什么区别   全局历史是预处理的历史所有信息的汇总，[头、关系、尾、频率]
+    
         '''
-        #-----------------全局历史建模        历史所有信息的汇总-------------------------------------
+        #-------
         if args.add_his_graph:
             sub_graph = sub_graph.to(self.gpu)
             self.his_ent, subg_index = self.all_GCN(self.h, sub_graph,use_cuda)
@@ -288,7 +286,7 @@ class RecurrentRGCN(nn.Module):
         
         '''
 
-        ### --------------查询数据处理-----------------------
+        ### --------------
         uniq_e = que_pair[0]
         r_len = que_pair[1]
         r_idx = que_pair[2]
@@ -305,17 +303,17 @@ class RecurrentRGCN(nn.Module):
             else:
                 e_input = torch.zeros(self.num_ents, self.num_rels * 2).float().cuda() if use_cuda else torch.zeros(self.num_ents,
                                                                                                             self.num_rels * 2).float()
-            # 构造 one-hot 查询表示
+            # 
             for span, e_idx in zip(r_len, uniq_e):
                 if args.relation_prediction:
                     one_hot = torch.zeros(self.num_ents).to(self.gpu) if use_cuda else torch.zeros(self.num_ents)
                 else:
                     one_hot = torch.zeros(self.num_rels * 2).to(self.gpu) if use_cuda else torch.zeros(self.num_rels * 2)
-                rel_ids = r_idx[span[0]:span[1]]  # 当前头实体关联的所有关系 ID
-                # one_hot[rel_ids] = 1.0  # 设置对应位置为 1
-                #计数版
+                rel_ids = r_idx[span[0]:span[1]]  # 
+                # one_hot[rel_ids] = 1.0  # 
+                #
                 one_hot.index_add_(0, rel_ids, torch.ones_like(rel_ids, dtype=one_hot.dtype))
-                # 加上这行做归一化
+                # 
                 num_rels_used = rel_ids.numel()
                 if num_rels_used > 0:
                     one_hot /= num_rels_used
@@ -325,21 +323,21 @@ class RecurrentRGCN(nn.Module):
 
         if self.pre_type=="TF":
             '''
-            修改成TF
+         
             '''
             graph_embeddings = []
             for i, g in enumerate(g_list):
                 g = g.to(self.gpu)
                 '''
-                ##########输入初始实体self.h, 初始关系self.emb_rel
+                ##########
                 '''
                 current_h = self.rgcn.forward(g, self.h, [self.emb_rel, self.emb_rel])
                 current_h = F.normalize(current_h) if self.layer_norm else current_h
                 '''
-                在关系预测任务中，学习实体的时间演化，和学习关系的时间演化效果一样
+              
                 '''
                 graph_embeddings.append(current_h)  # current_h
-            ####直接用全局关系嵌入表示当前关系
+            ##
             self.hr = F.normalize(self.emb_rel) if self.layer_norm else self.emb_rel
 
             if len(graph_embeddings) < args.train_history_len:
@@ -355,20 +353,20 @@ class RecurrentRGCN(nn.Module):
                 graph_embeddings = torch.stack(graph_embeddings, dim=0) if graph_embeddings else zero_padding
                 graph_embeddings = torch.cat([zero_padding, graph_embeddings], dim=0)
             else:
-                # 如果长度足够，直接转换为 Torch 张量
+                # 
                 graph_embeddings = torch.stack(graph_embeddings, dim=0)
                 src_key_padding_mask = torch.zeros(graph_embeddings[0].size(0),len(graph_embeddings), dtype=torch.bool, device=self.gpu)   # 全部 valid
 
             graph_embeddings = graph_embeddings.permute(1, 0, 2) # (7128, 7, 200)
 
 
-            ## --------------查询数据处理-----------------------
+            ## ------------------
             if not args.use_onehot and args.add_query:
                 # print("使用Q-encoder模块")
                 if args.relation_prediction:
-                    temp_r = self.h  #或者使用 self.dynamic_emb      关系预测
+                    temp_r = self.h  #  
                 else:
-                    temp_r = self.emb_rel #或者使用 self.emb_rel
+                    temp_r = self.emb_rel #
 
                 max_rel_per_ent = max([end - start for (start, end) in r_len])
 
@@ -378,13 +376,12 @@ class RecurrentRGCN(nn.Module):
 
                 # print(r_len, r_idx)# [113, 114]],tensor([230, 230, 230, 230, 233, 234, 23
                 for span, e_idx in zip(r_len, uniq_e):
-                    # 构造一个定长的 mask，用于统计该实体与全体关系的交互（230个）
-                    rel_ids = r_idx[span[0]:span[1]]  # 这些是原始的关系 ID，范围在 [0, num_rels*2)
+                    rel_ids = r_idx[span[0]:span[1]]  # 
                     # print(rel_ids)
                     masked_rel = temp_r[rel_ids,:]
                     num_rel = masked_rel.size(0)
-                    e_input[e_idx, :num_rel, :] = masked_rel  # padding 到 max_rel_per_ent
-                    # x = masked_rel.sum(dim=0)  # [h_dim] 均值
+                    e_input[e_idx, :num_rel, :] = masked_rel  # 
+                    # x = masked_rel.sum(dim=0)  # 
                     # x = self.Agg(masked_rel)
 
                 query_mask = torch.zeros((self.num_ents, self.h_dim)).to(self.gpu) if use_cuda else torch.zeros(1)
@@ -409,11 +406,8 @@ class RecurrentRGCN(nn.Module):
 
 
     def predict(self,que_pair, sub_graph, T_id, test_graph, num_rels, static_graph, test_triples, use_cuda):
-        # que_pair 是输入的一个三元组（triplet）集合的处理结果，包含查询实体及其关联的关系信息。
-        # sub_graph 当前时间步的子图
-        # test_graph 历史子图
+        
         with torch.no_grad():
-            # 获取所有的测试三元组
             all_triples = test_triples
             # all_triples = test_triples[test_triplets[:, 0].argsort()]
             embedding, _, _, r_emb, his_emb, his_r_emb, _ = self.forward(que_pair, sub_graph, T_id, test_graph, static_graph, use_cuda)
@@ -433,11 +427,10 @@ class RecurrentRGCN(nn.Module):
         all_triples = triples
 
         embedding, static_emb, static_remb, r_emb, his_emb, his_r_emb, his_rel_embs = self.forward(que_pair, sub_graph, T_idx, glist, static_graph, use_cuda)
-        # 处理静态图的loss
         # static_emb   torch.Size([7328,200])
         if self.use_static:
             if static_triples ==[]:
-                pass#不处理静态图的反关系
+                pass#
             else:
                 scores_static = self.static_decoder.forward(static_emb, static_remb, static_triples)
                 # scores_static = self.static_decoder.forward(static_emb, static_triples)
@@ -450,12 +443,11 @@ class RecurrentRGCN(nn.Module):
         score_seq = F.softmax(scores_ob, dim=1)
         scores_en = torch.log(score_seq)
         '''
-        它的作用是计算模型的预测（scores_en）与真实标签（triples[:, 2]，即尾实体的索引）之间的损失。
         '''
         if args.relation_prediction:
-            loss_ent += F.nll_loss(scores_en, all_triples[:, 1])  # 负对数似然损失，用于多类分类问题。输出每个类的对数概率，评估输出与真实标签之间的差距
+            loss_ent += F.nll_loss(scores_en, all_triples[:, 1])  # 
         else:
-            loss_ent += F.nll_loss(scores_en, all_triples[:, 2])#负对数似然损失，用于多类分类问题。输出每个类的对数概率，评估输出与真实标签之间的差距
+            loss_ent += F.nll_loss(scores_en, all_triples[:, 2])#
         # print(f'ent:',loss_ent)
         return loss_ent, loss_static
 
@@ -464,7 +456,6 @@ class RecurrentRGCN(nn.Module):
         sub_graph = sub_graph.to(self.gpu)
         sub_graph.ndata['h'] = ent_emb
         his_emb = self.his_rgcn_layer.forward(sub_graph, ent_emb, [self.emb_rel, self.emb_rel])
-        #选择具有非零入度的节点
         subg_index = torch.masked_select(
                 torch.arange(0, sub_graph.number_of_nodes(), dtype=torch.long).cuda(),
                 (sub_graph.in_degrees(range(sub_graph.number_of_nodes())) > 0))
