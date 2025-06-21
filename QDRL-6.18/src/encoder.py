@@ -12,7 +12,7 @@ class Transformer_encoder(nn.Module):
                 use_query=False):
         super().__init__()
 
-        encoder_layer = TransformerEncoderLayer(d_model, nhead, dim_feedforward, dropout, activation, normalize_before)#1024是拼接后的维度
+        encoder_layer = TransformerEncoderLayer(d_model, nhead, dim_feedforward, dropout, activation, normalize_before)#
         encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
         self.d_model = d_model
         self.use_query = use_query
@@ -31,7 +31,7 @@ class Transformer_encoder(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def forward(self, v, q, src_key_padding_mask, mask):#, query_embed, pos_embed
+    def forward(self, v, q, src_key_padding_mask, mask):#
      
         cls_token = self.cls_token.expand(v.size(0), -1, -1)  #
         if self.use_query:
