@@ -17,10 +17,10 @@ class Transformer_encoder(nn.Module):
         self.d_model = d_model
         self.use_query = use_query
 
-        self.cls_token = nn.Parameter(torch.randn(1, d_model))  # 可训练的CLS嵌入
+        self.cls_token = nn.Parameter(torch.randn(1, d_model))  # 
 
         self.encoder = TransformerEncoder(d_model, encoder_layer, num_encoder_layers, encoder_norm)
-        # 位置编码
+        # 
         self.pos_emb = PositionalEncoding(d_model)
 
         self._reset_parameters()
@@ -32,19 +32,19 @@ class Transformer_encoder(nn.Module):
                 nn.init.xavier_uniform_(p)
 
     def forward(self, v, q, src_key_padding_mask, mask):#, query_embed, pos_embed
-        # 将CLS嵌入复制到每个样本的批次中
-        cls_token = self.cls_token.expand(v.size(0), -1, -1)  # 扩展CLS到批次大小 #20%
+     
+        cls_token = self.cls_token.expand(v.size(0), -1, -1)  #
         if self.use_query:
             pass
         else:
             q = cls_token
 
-        v = torch.cat([v, q], dim=1)  # 将CLS嵌入添加到序列前
+        v = torch.cat([v, q], dim=1)  # 
 
-        # 位置编码
+        # 
         pos = self.pos_emb(v)
 
-        # 2. 更新 src_key_padding_mask：加一个 False 表示 CLS 是有效的
+        #
         cls_mask = torch.zeros((src_key_padding_mask.size(0), 1), dtype=torch.bool, device=src_key_padding_mask.device)
         src_key_padding_mask = torch.cat([cls_mask, src_key_padding_mask], dim=1)  # [B, T+1]
 
@@ -160,7 +160,7 @@ def _get_activation_fn(activation):
     raise RuntimeError(F"activation should be relu/gelu, not {activation}.")
 
 
-############位置编码
+############
 class PositionalEncoding(nn.Module):
     def __init__(self, d_embed, seq_len=5000):
         super(PositionalEncoding, self).__init__()
@@ -171,15 +171,15 @@ class PositionalEncoding(nn.Module):
             torch.arange(0, d_embed, 2).float()
             * (-math.log(10000.0) / d_embed)
         )
-        pe[:, 0::2] = torch.sin(position * div_term)# 字嵌入维度为偶数时
-        pe[:, 1::2] = torch.cos(position * div_term)# 字嵌入维度为奇数时
-        pe = pe.unsqueeze(0)## 在指定维度0上增加维度大小为1[3,4] -> [1,3,4]
+        pe[:, 0::2] = torch.sin(position * div_term)# 
+        pe[:, 1::2] = torch.cos(position * div_term)# 
+        pe = pe.unsqueeze(0)## 
         self.register_buffer("pe", pe)
 
     def forward(self, x):
-        # x = x * math.sqrt(self.d_model)# sqrt() 方法返回数字x的平方根 适应多头注意力机制的计算，它说“这个数值的选取略微增加了内积值的标准差，从而降低了内积过大的风险，可以使词嵌入张量在使用多头注意力时更加稳定可靠”
-        x_pos = self.pe[:, : x.size(1), :]# 变为x.size(1)长度，torch.Size([1, 4, 512])
-        return x_pos#layer层会再加上位置信息
+        # x = x * math.sqrt(self.d_model)#
+        x_pos = self.pe[:, : x.size(1), :]# 
+        return x_pos#
 
 
 if __name__ == '__main__':
@@ -192,13 +192,13 @@ if __name__ == '__main__':
 
     model = Transformer_encoder(d_model=input_dim, nhead=2, num_encoder_layers=4,dim_feedforward=256)
 
-    # 输入数据
+    # 
     x = torch.randn(batch_size, seq_len, input_dim)
 
     q = torch.randn(batch_size, 1, input_dim)
 
     attn_mask = torch.zeros(batch_size, seq_len+1, seq_len+1)
-    attn_mask[:, :, 1] = float('-inf')  # 举例
+    attn_mask[:, :, 1] = float('-inf')  # 
 
     print(attn_mask.shape)
     output = model(x, q, attn_mask)
