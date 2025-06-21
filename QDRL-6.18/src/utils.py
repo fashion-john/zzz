@@ -105,7 +105,7 @@ def build_graph(num_nodes, num_rels, triples, use_cuda, gpu):
         return norm
     # print("the num of dict", len(sro_to_fre))
     # triples = np.array(triples)
-    src, rel, dst, fre = triples.transpose()#转置 将频率作为边的一个特征
+    src, rel, dst, fre = triples.transpose()#
     # print(f'有多少头结点{len(set(src))}') #862
     # print(f'有多少尾结点{len(set(dst))}') #4871
     # print(f'有多少关系{len(set(rel))}') #436
@@ -125,8 +125,8 @@ def build_graph(num_nodes, num_rels, triples, use_cuda, gpu):
     return g
 
 
-def build_sub_graph(num_nodes, num_rels, triples, use_cuda, gpu):##############图特征初始化的过程
-    def comp_deg_norm(g):#计算节点的入度归一化值。用于消息传递过程中的节点特征归一化。
+def build_sub_graph(num_nodes, num_rels, triples, use_cuda, gpu):#
+    def comp_deg_norm(g):#
         in_deg = g.in_degrees(range(g.number_of_nodes())).float()
         in_deg[torch.nonzero(in_deg == 0).view(-1)] = 1
         norm = 1.0 / in_deg
@@ -135,7 +135,7 @@ def build_sub_graph(num_nodes, num_rels, triples, use_cuda, gpu):##############�
     # print(triples)
     src, rel, dst = triples.transpose()
     src, dst = np.concatenate((src, dst)), np.concatenate((dst, src))
-    rel = np.concatenate((rel, rel + num_rels))####增加反关系
+    rel = np.concatenate((rel, rel + num_rels))###
     # print(rel.shape, rel)
     g = dgl.DGLGraph()
     g.add_nodes(num_nodes)
@@ -167,7 +167,7 @@ def get_sample_from_history_graph3(subg_arr, sr_to_sro, triples, num_nodes, num_
     src_set = set(triples[:, 0])
     dst_set = set(triples[:, 0])
 
-    # ----------------二阶邻居采样-----------------------
+    # ---------------
     # er_list = list(set([(tri[0],tri[1]) for tri in all_triples]))
     er_list = list(set([(tri[0],tri[1]) for tri in triples]))
     er_list_inv = list(set([(tri[0],tri[1]) for tri in inverse_triples]))
@@ -179,24 +179,22 @@ def get_sample_from_history_graph3(subg_arr, sr_to_sro, triples, num_nodes, num_
     subg_triples = np.concatenate([subg_arr, inverse_subg])
 
     df = pd.DataFrame(np.array(subg_triples), columns=['src', 'rel', 'dst'])
-    #整合重复三元组并统计三元组的频率，将三元组的频率作为第四列数据
     subg_df = df.groupby(df.columns.tolist()).size().reset_index().rename(columns={0:'freq'})
     keys = list(sr_to_sro.keys())
     values = list(sr_to_sro.values())
-    df_dic = pd.DataFrame({'sr': keys, 'dst': values}) #将查询字段转化为pandas
+    df_dic = pd.DataFrame({'sr': keys, 'dst': values}) #
 
-    dst_df = df_dic.query('sr in @er_list')  #获取查询实体和关系的pandas
-    dst_get = dst_df['dst'].values    #获取目标尾实体
-    two_ent = set().union(*dst_get)   #将头实体与尾实体进行整合
+    dst_df = df_dic.query('sr in @er_list')  #
+    dst_get = dst_df['dst'].values    #
+    two_ent = set().union(*dst_get)   #
     all_ent = list(src_set|two_ent)
     result = subg_df.query('src in @all_ent')
 
-    dst_df_inv = df_dic.query('sr in @er_list_inv')  #获取查询实体和关系的pandas
-    dst_get_inv = dst_df_inv['dst'].values    #获取目标尾实体
-    two_ent_inv = set().union(*dst_get_inv)   #将头实体与尾实体进行整合
+    dst_df_inv = df_dic.query('sr in @er_list_inv')  #
+    dst_get_inv = dst_df_inv['dst'].values    #
+    two_ent_inv = set().union(*dst_get_inv)   #
     all_ent_inv = list(dst_set|two_ent_inv)
     result_inv = subg_df.query('src in @all_ent_inv')
-    #----------------二阶邻居采样-----------------------
     # result = subg_df.query('src in @src_set')
     q_tri = result.to_numpy()
     q_tri_inv = result_inv.to_numpy()
@@ -405,8 +403,7 @@ def split_by_time(data):
     for i in range(len(data)):
         t = data[i][3]
         train = data[i]
-        # latest_t表示读取的上一个三元组发生的时刻，要求数据集中的三元组是按照时间发生顺序排序的
-        if latest_t != t:  # 同一时刻发生的三元组
+        if latest_t != t:  #
             # show snapshot
             latest_t = t
             if len(snapshot):
@@ -439,7 +436,7 @@ def slide_list(snapshots, k=1):
     :param snapshots: all snapshot
     :return:
     """
-    k = k  # k=1 需要取长度k的历史，在加1长度的label
+    k = k  # 
     if k > len(snapshots):
         print("ERROR: history length exceed the length of snapshot: {}>{}".format(k, len(snapshots)))
     for _ in tqdm(range(len(snapshots)-k+1)):
